@@ -1,0 +1,9 @@
+build:
+  docker:
+    web: Dockerfile
+run:
+  web: nix-shell --argstr type run --run "gunicorn --paste etc/production.ini --bind :$PORT --workers=3"
+release:
+  command:
+    - nix-shell --argstr type run --run ".heroku/release.sh"
+  image: web
