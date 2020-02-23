@@ -13,11 +13,21 @@ let
 
   # TODO: Remove this when upgrading to nixos-20.03 when we can
   # use poetry from the stable channel
-  unstable = import (fetchTarball {
-    url =
-      "https://github.com/nixos/nixpkgs/tarball/e94a84a144b83eebfcfb33ac3315c01d0d4b3a0a";
-    sha256 = "12n3va055kn001mqps7yar090vf2h4riwczd0ma6l2vb0rf2gd36";
-  }) {
+  unstableSrc = pkgs.srcOnly {
+    name = "nixpkgs-unstable-src";
+    src = fetchTarball {
+      url = "https://github.com/nixos/nixpkgs/tarball/e94a84a144b83eebfcfb33ac3315c01d0d4b3a0a";
+      sha256 = "12n3va055kn001mqps7yar090vf2h4riwczd0ma6l2vb0rf2gd36";
+    };
+    patches = [
+      # https://github.com/NixOS/nixpkgs/pull/80880
+      (pkgs.fetchpatch {
+        url = "https://github.com/NixOS/nixpkgs/commit/8f5b5baed7eb09aa84e09bffb33a437e90186ba7.patch";
+        sha256 = "057x5prxkvffd99v5pmvk2faliyk4qd4psf6bdqpwcc0839f7z0x";
+      })
+    ];
+  };
+  unstable = import unstableSrc {
     config = { };
     overlays = [ ];
   };
@@ -55,7 +65,7 @@ let
     ];
 
   # Only these dependencies are needed to run in production
-  runDeps = with pkgs; [ unstable.poetry curl postgresql_11 ];
+  runDeps = with pkgs; [ (unstable.poetry.override { python = unstable.python38; }) curl postgresql_11 ];
 
 in stdenv.mkDerivation {
   name = "dev-shell";
